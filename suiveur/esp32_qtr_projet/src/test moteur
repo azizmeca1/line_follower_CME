@@ -1,0 +1,81 @@
+#include <Arduino.h>
+
+// Broches TB6612FNG
+const int pinPWMA = 18; // Moteur Gauche
+const int pinAIN1 = 19;
+const int pinAIN2 = 21;
+
+const int pinPWMB = 17; // Moteur Droit
+const int pinBIN1 = 16;
+const int pinBIN2 = 4;
+
+const int pinSTBY = 23;
+
+void m_stop() {
+  analogWrite(pinPWMA, 0);
+  analogWrite(pinPWMB, 0);
+  digitalWrite(pinSTBY, LOW);
+}
+
+void setMotors(int speedLeft, int speedRight) {
+  digitalWrite(pinSTBY, HIGH);
+
+  // Moteur Gauche (A)
+  if (speedLeft >= 0) {
+    digitalWrite(pinAIN1, HIGH);
+    digitalWrite(pinAIN2, LOW);
+  } else {
+    digitalWrite(pinAIN1, LOW);
+    digitalWrite(pinAIN2, HIGH);
+    speedLeft = -speedLeft;
+  }
+  analogWrite(pinPWMA, constrain(speedLeft, 0, 255));
+
+  // Moteur Droit (B)
+  if (speedRight >= 0) {
+    digitalWrite(pinBIN1, HIGH);
+    digitalWrite(pinBIN2, LOW);
+  } else {
+    digitalWrite(pinBIN1, LOW);
+    digitalWrite(pinBIN2, HIGH);
+    speedRight = -speedRight;
+  }
+  analogWrite(pinPWMB, constrain(speedRight, 0, 255));
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(pinPWMA, OUTPUT);
+  pinMode(pinAIN1, OUTPUT);
+  pinMode(pinAIN2, OUTPUT);
+  pinMode(pinPWMB, OUTPUT);
+  pinMode(pinBIN1, OUTPUT);
+  pinMode(pinBIN2, OUTPUT);
+  pinMode(pinSTBY, OUTPUT);
+
+  m_stop();
+  Serial.println("--- DEBUT DU TEST MOTEURS ---");
+}
+
+void loop() {
+  Serial.println("1. AVANT (Vitesse 150)");
+  setMotors(150, 150);
+  delay(2000);
+
+  Serial.println("2. ARRIERE (Vitesse 150)");
+  setMotors(-150, -150);
+  delay(2000);
+
+  Serial.println("3. PIVOT GAUCHE");
+  setMotors(-150, 150);
+  delay(1500);
+
+  Serial.println("4. PIVOT DROIT");
+  setMotors(150, -150);
+  delay(1500);
+
+  Serial.println("5. ARRET (2 secondes)");
+  m_stop();
+  delay(2000);
+}
