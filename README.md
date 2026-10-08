@@ -1,6 +1,6 @@
 # Robot Suiveur de Ligne ESP32 (PID) - CME
 
-Bienvenue dans la documentation complète du projet **line_follower_CME**. Ce guide permet à n'importe quel débutant, **sous Windows**, de câbler, tester, calibrer et régler un robot suiveur de ligne basé sur un microcontrôleur **ESP32**, un driver moteur **TB6612FNG** et une barre de 8 capteurs infrarouges **Pololu QTR-8A**.
+Bienvenue dans la documentation complète du projet **line_follower_CME**. Ce guide permet à n'importe quel débutant, **sous Windows**, de câbler, tester, calibrer et régler un robot suiveur de ligne basé sur un microcontrôleur **ESP32 WROOM**, un driver moteur **TB6612FNG** et une barre de 8 capteurs infrarouges **Pololu QTR-8A**.
 
 ---
 
@@ -34,7 +34,7 @@ Le robot lit en temps réel la réflectivité du sol grâce à 8 capteurs infrar
 
 | Composant | Quantité | Description |
 | :--- | :---: | :--- |
-| **ESP32 DevKit V1** | 1 | Microcontrôleur principal 32 bits (3.3V) |
+| **ESP32 DevKit V1 (ESP32 WROOM)** | 1 | Microcontrôleur principal 32 bits (3.3V), module ESP32-WROOM-32 |
 | **Pololu QTR-8A** | 1 | Barre de 8 capteurs IR analogiques |
 | **TB6612FNG** | 1 | Driver moteur double pont en H |
 | **Moteurs CC** | 2 | Micro-moteurs à réducteur (ex : N20 6V 500-1000 RPM) |
@@ -90,22 +90,141 @@ Le robot lit en temps réel la réflectivité du sol grâce à 8 capteurs infrar
 
 ## Installation de l'Environnement de Développement (Windows)
 
-### Méthode A : VS Code + PlatformIO (recommandé)
+Ce projet utilise une carte **ESP32 WROOM** (ESP32 DevKit V1, module ESP32-WROOM-32). Deux environnements sont possibles. Choisissez-en **un seul** :
 
-#### 1. Installer les outils
-1. Installez [Visual Studio Code](https://code.visualstudio.com/).
-2. Dans VS Code, ouvrez l'onglet **Extensions** (`Ctrl+Shift+X`), cherchez **PlatformIO IDE** et cliquez sur **Install**.
-3. Attendez la fin de l'installation, puis redémarrez VS Code (la première initialisation peut prendre quelques minutes).
+| Environnement | Pour qui | Avantage |
+| :--- | :--- | :--- |
+| **Méthode A : Arduino IDE** | Débutants | Installation rapide, interface simple |
+| **Méthode B : VS Code + PlatformIO** | Utilisateurs avancés | Gestion de projet propre, bibliothèques automatiques |
 
-#### 2. Installer le driver USB de la carte
-Selon la puce USB-UART de votre ESP32 DevKit, installez le driver correspondant :
-- **CP210x** (Silicon Labs) ou **CH340** (WCH).
-- Branchez la carte, puis ouvrez le **Gestionnaire de périphériques** (`Win+X`, puis Gestionnaire de périphériques) et repérez le port dans **Ports (COM et LPT)**, par exemple `COM3`.
+### Étape commune : installer le driver USB de la carte
 
-> Si la carte n'apparaît pas, essayez un autre câble USB : beaucoup de câbles ne transmettent que l'alimentation.
+La plupart des cartes ESP32 WROOM utilisent une puce USB-UART **CP210x** ou **CH340**. Sans driver, aucun port COM n'apparaît.
 
-#### 3. Configuration du projet
-Ouvrez le dossier du projet dans VS Code (`Fichier > Ouvrir un dossier`). Le fichier `platformio.ini` à la racine doit contenir :
+1. Regardez la petite puce près du connecteur USB de la carte (inscription CP2102 ou CH340).
+2. Téléchargez et installez le driver correspondant :
+   - **CP210x** (Silicon Labs) : https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
+   - **CH340** (WCH) : https://www.wch-ic.com/downloads/CH341SER_EXE.html
+3. Branchez la carte avec un **câble USB de données** (pas un câble de charge seule).
+4. Ouvrez le **Gestionnaire de périphériques** (`Win+X`, puis Gestionnaire de périphériques) et déployez **Ports (COM et LPT)**. Notez le port, par exemple `COM3`.
+
+> Si aucun port n'apparaît : changez de câble USB, changez de port USB, puis réinstallez le driver.
+
+---
+
+### Méthode A : Arduino IDE
+
+#### A1. Installer Arduino IDE
+1. Téléchargez **Arduino IDE 2.x** : https://www.arduino.cc/en/software
+2. Lancez l'installateur (`Windows Win 10 and newer, 64 bits`) et acceptez les options par défaut.
+3. Ouvrez Arduino IDE. Si Windows demande d'autoriser des drivers, acceptez.
+
+#### A2. Ajouter la carte ESP32 (préférences Espressif)
+1. Allez dans `Fichier > Préférences`.
+2. Dans le champ **URL de gestionnaire de cartes supplémentaires**, collez exactement ce lien :
+
+```
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+```
+
+3. Cliquez sur **OK**.
+4. Ouvrez `Outils > Type de carte > Gestionnaire de cartes` (ou cliquez sur l'icône de carte dans la barre latérale gauche).
+5. Tapez **esp32** dans la recherche, repérez le paquet **esp32 by Espressif Systems** et cliquez sur **Installer**.
+6. Attendez la fin du téléchargement (plusieurs centaines de Mo : le premier téléchargement peut être long).
+
+> Documentation officielle Espressif : https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
+
+#### A3. Installer la bibliothèque QTRSensors
+
+**Option 1 : depuis le gestionnaire de bibliothèques (recommandé)**
+1. Ouvrez `Outils > Gérer les bibliothèques` (ou `Ctrl+Shift+I`).
+2. Cherchez **QTRSensors**.
+3. Sélectionnez **QTRSensors by Pololu** et cliquez sur **Installer**.
+
+**Option 2 : installation manuelle depuis un fichier ZIP**
+1. Téléchargez la bibliothèque depuis le dépôt officiel de Pololu : https://github.com/pololu/qtr-sensors-arduino
+   - Pour une version précise : https://github.com/pololu/qtr-sensors-arduino/releases
+   - Ou cliquez sur le bouton vert **Code > Download ZIP**.
+2. Dans Arduino IDE : `Croquis > Inclure une bibliothèque > Ajouter la bibliothèque .ZIP...`
+3. Sélectionnez le fichier ZIP téléchargé.
+4. Vérifiez l'installation : `Fichier > Exemples > QTRSensors` doit apparaître.
+
+#### A4. Configurer la carte
+Dans le menu `Outils`, réglez :
+
+| Paramètre | Valeur |
+| :--- | :--- |
+| **Type de carte** | `ESP32 Arduino > ESP32 Dev Module` |
+| **Upload Speed** | `921600` (passez à `115200` en cas d'erreur de téléversement) |
+| **CPU Frequency** | `240MHz (WiFi/BT)` |
+| **Flash Frequency** | `80MHz` |
+| **Flash Mode** | `QIO` |
+| **Flash Size** | `4MB (32Mb)` |
+| **Partition Scheme** | `Default 4MB with spiffs` |
+| **Port** | Le port COM repéré dans le Gestionnaire de périphériques (ex : `COM3`) |
+
+> Si `ESP32 Dev Module` pose problème, `ESP32-WROOM-DA Module` est une alternative pour les modules WROOM.
+
+#### A5. Ouvrir, téléverser et tester
+1. Ouvrez le fichier du programme (`.ino`) dans Arduino IDE (`Fichier > Ouvrir`).
+2. Cliquez sur **Vérifier** (coche) pour compiler.
+3. Cliquez sur **Téléverser** (flèche vers la droite).
+4. Si le message `Connecting........` reste bloqué, **maintenez le bouton BOOT** de la carte jusqu'au début du transfert, puis relâchez.
+5. Ouvrez le moniteur série (`Outils > Moniteur série`, ou `Ctrl+Shift+M`) et réglez la vitesse sur **115200 bauds**.
+6. Pour envoyer une commande (par exemple `s` pour l'arrêt d'urgence), tapez-la dans le champ du moniteur et appuyez sur `Entrée`.
+
+> Arduino IDE ne compile qu'un sketch à la fois : placez chaque sketch (test ou programme principal) dans son propre dossier portant le même nom que le fichier `.ino`.
+
+---
+
+### Méthode B : VS Code + PlatformIO
+
+#### B1. Installer Visual Studio Code
+1. Téléchargez VS Code : https://code.visualstudio.com/
+2. Lancez l'installateur et cochez **Ajouter à PATH** ainsi que **Ajouter l'action "Ouvrir avec Code"** (utile pour ouvrir un dossier en un clic).
+3. Ouvrez VS Code.
+
+#### B2. Installer l'extension PlatformIO
+1. Cliquez sur l'icône **Extensions** dans la barre latérale (ou `Ctrl+Shift+X`).
+2. Tapez **PlatformIO IDE** dans la recherche.
+3. Sélectionnez l'extension **PlatformIO IDE** (éditeur : PlatformIO) et cliquez sur **Install**.
+   - Page de l'extension : https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide
+4. Attendez la fin de l'installation. Une notification indique que PlatformIO installe ses outils (cela peut prendre plusieurs minutes).
+5. **Redémarrez VS Code** lorsque c'est demandé. Une icône en forme de **tête de fourmi** apparaît dans la barre latérale : c'est PlatformIO.
+
+> Si l'installation échoue, vérifiez la connexion Internet et que le chemin de votre dossier utilisateur Windows ne contient pas de caractères spéciaux.
+
+#### B3. Créer le projet, étape par étape
+1. Cliquez sur l'icône **PlatformIO** (tête de fourmi) dans la barre latérale.
+2. Dans **PROJECT TASKS > Quick Access**, cliquez sur **PIO Home > Open**.
+3. Sur la page d'accueil, cliquez sur **+ New Project**.
+4. Remplissez la fenêtre :
+
+| Champ | Valeur |
+| :--- | :--- |
+| **Name** | `esp32_qtr_projet` (ou le nom de votre choix, sans espaces) |
+| **Board** | `Espressif ESP32 Dev Module` (tapez `esp32dev` dans la recherche) |
+| **Framework** | `Arduino` |
+| **Location** | Décochez **Use default location** et choisissez votre dossier (ex : `C:\Users\VotreNom\Documents\line_follower_CME\suiveur`) |
+
+5. Cliquez sur **Finish**.
+6. Attendez la fin de l'initialisation : PlatformIO télécharge le framework Arduino-ESP32 et la chaîne de compilation lors du premier lancement (plusieurs centaines de Mo, quelques minutes).
+7. Si VS Code demande **Do you trust the authors of the files in this folder?**, cliquez sur **Yes, I trust the authors**.
+
+#### B4. Comprendre la structure créée
+
+```
+esp32_qtr_projet/
+|-- include/         Fichiers d'en-tête (.h)
+|-- lib/             Bibliothèques locales
+|-- src/
+|   `-- main.cpp     Programme principal
+|-- test/            Tests
+`-- platformio.ini   Configuration du projet
+```
+
+#### B5. Configurer `platformio.ini`
+Ouvrez `platformio.ini` et remplacez son contenu par :
 
 ```ini
 [env:esp32dev]
@@ -117,24 +236,35 @@ lib_deps =
     pololu/QTRSensors@^4.0.0
 ```
 
-Si PlatformIO ne détecte pas le bon port automatiquement, ajoutez (en remplaçant `COM3` par votre port) :
+Si PlatformIO ne détecte pas le bon port, ajoutez (en remplaçant `COM3` par votre port) :
 
 ```ini
 upload_port = COM3
 monitor_port = COM3
 ```
 
-#### 4. Compiler, téléverser et ouvrir le moniteur série
+Enregistrez avec `Ctrl+S`. PlatformIO télécharge automatiquement la bibliothèque **QTRSensors** au prochain build, sans installation manuelle.
 
-**Avec l'interface (le plus simple)** : utilisez la barre bleue en bas de VS Code.
+> Ajouter une bibliothèque via l'interface : PIO Home > **Libraries**, recherchez `QTRSensors`, ouvrez la page de la bibliothèque puis cliquez sur **Add to Project** et choisissez votre projet.
+
+#### B6. Ajouter le code du robot
+1. Ouvrez `src/main.cpp`.
+2. Remplacez son contenu par le code du programme principal (ou copiez le fichier `main.cpp` du dépôt).
+3. Le fichier doit commencer par `#include <Arduino.h>`.
+4. Pour utiliser un sketch de test (ex : `test_QTR.ino`), copiez son contenu dans `main.cpp` temporairement, ou renommez-le en `.cpp` en ajoutant `#include <Arduino.h>` en tête.
+
+#### B7. Compiler, téléverser et ouvrir le moniteur
+
+**Avec l'interface (le plus simple)** : la barre bleue en bas de VS Code.
 
 | Icône | Action |
 | :--- | :--- |
 | Coche | Compiler (Build) |
 | Flèche vers la droite | Téléverser (Upload) |
-| Prise / icône de terminal | Ouvrir le moniteur série (Serial Monitor) |
+| Corbeille | Nettoyer le projet (Clean) |
+| Prise électrique | Ouvrir le moniteur série (Serial Monitor) |
 
-**En ligne de commande** : ouvrez le terminal PlatformIO (`PlatformIO: New Terminal` dans la palette de commandes `Ctrl+Shift+P`), puis :
+**En ligne de commande** : ouvrez le terminal PlatformIO (`Ctrl+Shift+P`, puis `PlatformIO: New Terminal`) et tapez :
 
 ```powershell
 pio run
@@ -142,29 +272,24 @@ pio run --target upload
 pio device monitor
 ```
 
-Pour téléverser et ouvrir directement le moniteur :
+Pour téléverser puis ouvrir directement le moniteur :
 
 ```powershell
 pio run --target upload --target monitor
 ```
 
-> Si la commande `pio` n'est pas reconnue dans un terminal PowerShell classique, utilisez le chemin complet :
+> Si `pio` n'est pas reconnu dans un terminal PowerShell classique :
 > ```powershell
 > & "$env:USERPROFILE\.platformio\penv\Scripts\pio.exe" run
 > ```
 
-### Méthode B : Arduino IDE
+Pendant le téléversement, si le message `Connecting........` reste bloqué, **maintenez le bouton BOOT** de la carte jusqu'au début du transfert.
 
-1. Téléchargez et installez [Arduino IDE 2.x](https://www.arduino.cc/en/software).
-2. Ajoutez l'ESP32 : `Fichier > Préférences`, puis dans **URL de gestionnaire de cartes supplémentaires** collez :
-   `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
-3. Installez les cartes : `Outils > Type de carte > Gestionnaire de cartes`, cherchez **esp32** (Espressif Systems) et cliquez sur **Installer**.
-4. Installez la bibliothèque : `Outils > Gérer les bibliothèques`, cherchez **QTRSensors** (Pololu) et cliquez sur **Installer**.
-5. Téléversement :
-   - Sélectionnez `ESP32 Dev Module` dans `Outils > Type de carte`.
-   - Sélectionnez le port série (par exemple `COM3`) dans `Outils > Port`.
-   - Cliquez sur **Téléverser** (flèche vers la droite).
-6. Moniteur série : `Outils > Moniteur série`, vitesse **115200 bauds**.
+#### B8. Vérifier l'environnement
+- La compilation se termine par **SUCCESS** dans le terminal.
+- Le téléversement se termine par `Hard resetting via RTS pin...` puis **SUCCESS**.
+- Le moniteur série affiche du texte lisible à **115200 bauds**.
+- Pour quitter le moniteur : `Ctrl+C`.
 
 ---
 
@@ -179,7 +304,7 @@ suiveur/esp32_qtr_projet/
 `-- platformio.ini   Configuration PlatformIO
 ```
 
-> Avec **PlatformIO**, un seul programme est compilé à la fois depuis `src/`. Pour lancer un sketch de test (ex : `test_QTR.ino`), placez-le temporairement dans `src/` à la place du programme principal, ou utilisez l'Arduino IDE. Pensez à restaurer `main.cpp` ensuite.
+> Avec **PlatformIO**, un seul programme est compilé à la fois depuis `src/`. Pour lancer un sketch de test (ex : `test_QTR.ino`), placez-le temporairement dans `src/` à la place du programme principal, ou utilisez l'Arduino IDE (un sketch par dossier). Pensez à restaurer `main.cpp` ensuite.
 
 ---
 
